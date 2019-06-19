@@ -1,0 +1,12 @@
+Profiling
+==========
+
+We can use jvisualvm to profile even Spark Job. With help of this we can go to granular level of debugging to a Spark Job.
+This utility shows stats like memory used, heap data, garbage collector, and CPU profiling.
+
+Spark runs the executors in individual Java Virtual Machines (JVMs).
+
+jstack ---> for providing stack traces
+jmap   ---> for creating heapdumps
+jstat  ---> for reporting time–series statistics
+jconsole -> for visually exploring various JVM properties

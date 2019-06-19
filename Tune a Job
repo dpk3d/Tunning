@@ -1,0 +1,157 @@
+Tunning A Spark Job
+====================
+
+Some Basic stuff keep in Mind While Tunning:
+
+1.Object Serialization :
+
+Kryo because it’s both more compact and much more efficient than Java serialization.
+spark.serializer = org.apache.spark.serializer.KryoSerializer. 
+You will also need to explicitly register the classes that you would like to register with the Kryo serializer via the
+spark.kryo.classesToRegister configuration
+
+2. Cluster Configuration:
+
+Dynamic allocation:     spark.dynamicAllocation.enabled = true
+Scheduling:             spark.scheduler.mode = FAIR  --> better sharing of resources across multiple users.
+
+3. Data Storage (File Formats) :
+
+Parquet :
+
+Parquet stores data in binary files with column-oriented storage, and also tracks some statistics about each file that make it possible to
+quickly skip data not needed for a query. It is well integrated with Spark through the built-in Parquet data source.
+
+4. Splittable Types & Compression:
+
+Splittable ---> gzip, bzip2, lz4 , Snappy
+Non Splittable ---> zip, TAR
+
+Parquet with Snappy is best suited.
+
+5.Partitioning:
+
+Partitioning your data correctly allows Spark to skip many irrelevant files when it only
+requires data with a specific range of keys.
+
+6.Bucketing:
+
+Bucketing your data allows Spark to “pre-partition” data according to how joins or aggregations are likely to be performed by
+readers. This can improve performance and stability because data can be consistently distributed across partitions as 
+opposed to skewed into just one or two.
+
+7. Avoid Small File Size:
+
+Having lots of small files is going to make the scheduler work much harder to locate the data and launch all of the read tasks. 
+This can increase the network and scheduling overhead of the job.
+
+To control how many records go into each file, you can specify the ---- maxRecordsPerFile ----- option to the write operation.
+
+8. Data locality:
+
+Data locality basically specifies a preference for certain nodes that hold certain data, rather than having to exchange these 
+blocks of data over the network.
+e.g.
+PROCESS_LOCAL
+
+NODE_LOCAL
+
+NO_PREF
+
+RACK_LOCAL
+
+ANY
+
+
+9. Cost-Based Query optimizer : (Catalyst/Tungsten Optimzer)
+
+10. Shuffle Configuration:
+
+Enabling Spark’s external shuffle service can often increase performance because it allows nodes to read shuffle data from 
+remote machines even when the executors on those machines are busy (e.g., with garbage collection).
+
+Number of partitions of a shuffle matters by default is 200
+
+11. Garbage Collector:
+
+ -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps 
+ 
+ -XX:+UseG1GC -XX:+PrintFlagsFinal -XX:+PrintReferenceGC 
+ -verbose:gc -XX:+PrintGCDetails
+ -XX:+PrintGCTimeStamps -XX:+PrintAdaptiveSizePolicy 
+ -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark -Xms88g -Xmx88g
+ 
+ Decrease the InitiatingHeapOccupancyPercent option’s value (the default value is 45).
+ 
+ Increase the ConcGCThreads option’s value, to have more threads for concurrent marking,
+ thus we can speed up the concurrent marking phase.  Take caution that this option could also take up some effective worker thread resources,
+ depending on your workload CPU utilization.
+
+
+Java Heap space is divided in to two regions Young and Old. The Young generation is meant to 
+hold short-lived objects while the Old generation is intended for objects with longer lifetimes.
+
+The Young generation is further divided into three regions [Eden, Survivor1, Survivor2].
+
+A simplified description of the garbage collection procedure: When Eden is full,a minor GC is run on Eden and objects
+that are alive from Eden and Survivor1 are copied to Survivor2.
+The Survivor regions are swapped.If an object is old enough or Survivor2 is full, it is moved to Old. Finally, when Old is close to full, a full GC is invoked.
+
+
+ You can set the size of the Eden to be an over-estimate of how much memory each task will need.
+ If the size of Eden is determined to be E, then you can set the size of the Young generation using the option -Xmn=4/3*E.
+
+ if the OldGen is close to being full, reduce the amount of memory used for caching by lowering spark.memory.fraction; 
+ spark.memory.fraction = 0.25%
+ 
+ G1GC garbage collector with -XX:+UseG1GC. It can improve performance in some situations
+in which garbage collection is a bottleneck and you don’t have a way to reduce it further by sizing the
+generations. -XX:G1HeapRegionSize.
+
+You can specify garbage collection tuning flags for executors by setting
+spark.executor.extraJavaOptions in a job’s configuration
+ 
+12. Parallelism:
+
+spark.default.parallelism
+spark.sql.shuffle.partitions
+
+13. Improve Filtering
+14. Coalesce & Repartition
+15. Custom partitioning
+16. Avoid Using UDFs
+
+17. Caching:
+
+Cache, Persist, Unpersite
+
+Cache Data Storage Level:
+
+MEMORY_ONLY: If the RDD does not fit in memory, some partitions will not be cached and will be recomputed on the fly each time they’re needed.
+
+MEMORY_AND_DISK: If the RDD does not fit in memory, store the partitions that don’t fit on disk, and read them from there  when they’re needed.
+ 
+MEMORY_ONLY_SER: This is generally more spaceefficient than deserialized objects, especially when using a fast serializer, but more
+CPU-intensive to read.
+ 
+ MEMORY_AND_DISK_SER: Similar to MEMORY_ONLY_SER, but spill partitions that don’t fit in memory to disk instead of recomputing
+them on the fly each time they’re needed.
+
+DISK_ONLY:  Store the RDD partitions only on disk.
+
+OFF_HEAP: Similar to MEMORY_ONLY_SER, but store the data in off-heap memory. This requires off-heap memory to
+be enabled. TUNGSTEN does this.
+
+18. Joins
+
+Map Side, Broadcast Join. Avoid Cartesian Join
+Equi-join is best join.
+
+19. Broadcast Variables.
+
+default size is 25MB.
+
+
+~Deepak Singh
+ 
+ 

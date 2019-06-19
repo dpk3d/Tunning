@@ -1,0 +1,35 @@
+
+We Use
+YARN
+MESOS
+StandAlone and many more for Spark.
+
+But there are some more tools available for CLUSTER MONITORING
+
+1. GANGLIA
+2.PROMETHEUS
+
+GANGLIA eg: Amozon EMR
+===========
+Ganglia is cluster monitoring tool to monitor the health of distributed cluster of spark and hadoop.
+Ganglia is a scalable, distributed monitoring tool for high-performance computing systems, clusters and networks.
+It is used to view either live or recorded statistics covering metrics such as CPU load averages or network utilization for many nodes
+
+rrdtool ---> the Round-Robin Database, is a tool that’s used to store and display the variation of data over time using graphs.
+
+ganglia-gmetad---->the daemon that collects monitoring data from the hosts that you want to monitor. 
+
+In those hosts and in the master node it is also necessary to install ganglia-gmond (the monitoring daemon itself).
+gmond----> gmond is monitoring deamon which collect data from each node in the cluster and send it to specific host.
+ganglia-web ----> provides the web frontend where we will view the historical graphs and data about the monitored systems.
+
+PROMETHEUS e.g: Docker Container
+========== ===
+
+Prometheus works well for recording any purely numeric time series. 
+It fits both machine-centric monitoring as well as monitoring of highly dynamic service-oriented architectures.
+In a world of microservices, its support for multi-dimensional data collection and querying is a particular 
+
+Grafana --- It is a dashboard.
+
+~Deepak Singh
